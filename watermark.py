@@ -4,10 +4,10 @@ import cv2
 import os
 
 watermark_opacity = 0.9999 # Opacity of the watermark
-input_dir = 'input_files' # Path to the input files directory
-output_dir = 'output_files' # Path to the output file directory
+input_dir = 'DSC_input_2' # Path to the input files directory
+output_dir = 'output_files_new' # Path to the output file directory
 
-watermark = cv2.imread('watermark.png', cv2.IMREAD_UNCHANGED)
+watermark = cv2.imread('watermarkImages/watermark.png', cv2.IMREAD_UNCHANGED)
 (wH, wW) = watermark.shape[:2]
 
 print(f'watermark: {wH}, {wW}')
@@ -26,22 +26,30 @@ for imagePath in paths.list_images(input_dir):
 
     image = np.dstack([image, np.ones((h, w), dtype="uint8") * 255])
 
-    resized_width = int(2*w/3)
+    resized_width = int(w/3)
     r = resized_width / float(wW)
     resized_height = int(wH*r)
     dim = (resized_width, resized_height)
     watermark = cv2.resize(watermark, dim, interpolation=cv2.INTER_AREA)
 
-    overlay = np.zeros((h, w, 4), dtype="uint8")
-    overlay[h - resized_height - 10:h - 10, 10: resized_width + 10] = watermark
+    # overlay = np.zeros((h, w, 4), dtype="uint8")
+    # overlay[h - resized_height - 10:h - 10, 10: resized_width + 10] = watermark
 
     output = image.copy()
     # cv2.addWeighted(overlay, watermark_opacity, output, 1.0, 0, output)
 
-    for i in range(len(output)):
-        for j in range(len(output[i])):
-                if (overlay[i][j].all()) != 0:
-                    output[i][j] = overlay[i][j]
+    x_offset = 0
+    y_offset = h - resized_height
+    
+    y1, y2 = y_offset, y_offset + watermark.shape[0]
+    x1, x2 = x_offset, x_offset + watermark.shape[1]
+
+    alpha_waterm = watermark[:, :, 3] / 255.0
+    alpha_image = 1.0 - alpha_waterm
+
+    for c in range(0, 3):
+        output[y1:y2, x1:x2, c] = (alpha_waterm * watermark[:, :, c] +
+                                alpha_image * output[y1:y2, x1:x2, c])
 
     filename = imagePath[imagePath.rfind(os.path.sep) + 1:]
     p = os.path.sep.join((output_dir, filename))
