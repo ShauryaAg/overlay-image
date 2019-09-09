@@ -7,7 +7,7 @@ watermark_opacity = 0.9999 # Opacity of the watermark
 input_dir = 'input_files' # Path to the input files directory
 output_dir = 'output_files' # Path to the output file directory
 
-watermark = cv2.imread('correct_one.png', cv2.IMREAD_UNCHANGED)
+watermark = cv2.imread('watermark.png', cv2.IMREAD_UNCHANGED)
 (wH, wW) = watermark.shape[:2]
 
 print(f'watermark: {wH}, {wW}')
@@ -26,8 +26,14 @@ for imagePath in paths.list_images(input_dir):
 
     image = np.dstack([image, np.ones((h, w), dtype="uint8") * 255])
 
+    resized_width = int(2*w/3)
+    r = resized_width / float(wW)
+    resized_height = int(wH*r)
+    dim = (resized_width, resized_height)
+    watermark = cv2.resize(watermark, dim, interpolation=cv2.INTER_AREA)
+
     overlay = np.zeros((h, w, 4), dtype="uint8")
-    overlay[h - wH - 10:h - 10, 10: wW + 10] = watermark
+    overlay[h - resized_height - 10:h - 10, 10: resized_width + 10] = watermark
 
     output = image.copy()
     # cv2.addWeighted(overlay, watermark_opacity, output, 1.0, 0, output)
